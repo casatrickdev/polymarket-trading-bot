@@ -61,11 +61,18 @@ cd Polymarket-bot
 
 *(Note: If you downloaded the ZIP file instead, just unzip it and open the folder in your terminal)*
 
-### Step 2: Install Dependencies
-This installs all the "parts" the bot needs to run.
+### Step 2: Install Dependencies & Build Dashboard
+This installs all the "parts" the bot needs to run and builds the dashboard interface.
 
 ```bash
+# Install main dependencies
 npm install
+
+# Build the dashboard (Critical Step!)
+cd dashboard
+npm install
+npm run build
+cd ..
 ```
 
 *This process might take 1-3 minutes.*
