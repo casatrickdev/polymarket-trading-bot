@@ -5,6 +5,8 @@
 [![English](https://img.shields.io/badge/Language-English-blue)](README.md)
 [![Arabic](https://img.shields.io/badge/Language-Arabic-green)](README_AR.md)
 
+**تم الإنشاء بواسطة**: [@Mr_CryptoYT](https://x.com/Mr_CryptoYT)
+
 هذا الدليل سيأخذك خطوة بخطوة **من الألف إلى الياء** لإعداد وتكوين وتشغيل بوت التداول الخاص بك. لا يتطلب خبرة سابقة.
 
 ---
@@ -53,8 +55,8 @@
 لتحميل كود البوت إلى جهازك:
 
 ```bash
-git clone https://github.com/cyl19970726/poly-sdk.git
-cd poly-sdk
+git clone https://github.com/MrFadiAi/Polymarket-bot.git
+cd Polymarket-bot
 ```
 
 *(ملاحظة: إذا قمت بتحميل ملف ZIP بدلاً من ذلك، فقط قم بفك الضغط وافتح المجلد في التيرمينال)*

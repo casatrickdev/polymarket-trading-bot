@@ -5,6 +5,8 @@
 [![English](https://img.shields.io/badge/Language-English-blue)](README.md)
 [![Arabic](https://img.shields.io/badge/Language-Arabic-green)](README_AR.md)
 
+**Created by**: [@Mr_CryptoYT](https://x.com/Mr_CryptoYT)
+
 This guide will take you **from A to Z** on how to set up, configure, and run your own trading bot. No prior experience required.
 
 ---
@@ -53,8 +55,8 @@ Open your terminal (Command Prompt or PowerShell on Windows, Terminal on Mac) an
 Download the bot code to your computer.
 
 ```bash
-git clone https://github.com/cyl19970726/poly-sdk.git
-cd poly-sdk
+git clone https://github.com/MrFadiAi/Polymarket-bot.git
+cd Polymarket-bot
 ```
 
 *(Note: If you downloaded the ZIP file instead, just unzip it and open the folder in your terminal)*
