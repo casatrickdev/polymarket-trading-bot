@@ -8,9 +8,10 @@ interface HeaderProps {
   connected: boolean;
   onHistoryClick?: () => void;
   onPositionsClick?: () => void;
+  onToggleDryRun?: () => void;
 }
 
-export function Header({ state, config, connected, onHistoryClick, onPositionsClick }: HeaderProps) {
+export function Header({ state, config, connected, onHistoryClick, onPositionsClick, onToggleDryRun }: HeaderProps) {
   const [runtime, setRuntime] = useState('0m');
   const [copied, setCopied] = useState(false);
 
@@ -117,6 +118,18 @@ export function Header({ state, config, connected, onHistoryClick, onPositionsCl
           >
             <span>📦</span>
             Positions
+          </button>
+
+          {/* Toggle Dry Run / Live */}
+          <button
+            onClick={onToggleDryRun}
+            className={`btn text-sm ${isDryRun
+                ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-300'
+                : 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-300'
+              }`}
+          >
+            <span>{isDryRun ? '💰' : '🧪'}</span>
+            Switch to {isDryRun ? 'LIVE' : 'DRY RUN'}
           </button>
 
           <div className="w-px h-8 bg-white/10" />

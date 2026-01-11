@@ -26,7 +26,7 @@ import { addSession, createSessionFromState, type TradeRecord } from './src/dash
 // CONFIGURATION (same as bot-config.ts)
 // ============================================================================
 
-const CONFIG = {
+let CONFIG = {
   capital: {
     totalUsd: parseFloat(process.env.CAPITAL_USD || '250'),
     maxPerTradePct: 0.03,
@@ -941,6 +941,64 @@ async function main() {
 
   log('INFO', 'Configuration', {
     binance: CONFIG.binance.enabled,
+  });
+
+  // Handle Dashboard Commands
+  dashboardEmitter.on('command', async (cmd: { command: string; payload: any }) => {
+    if (cmd.command === 'toggleDryRun') {
+      const enable = cmd.payload.enabled;
+      if (CONFIG.dryRun === !enable) {
+        log('INFO', `Switching to ${!enable ? 'LIVE' : 'DRY RUN'} mode... (Requested by user)`);
+
+        // Update Config
+        CONFIG.dryRun = !enable; // payload.enabled is "isLive?" or "isDryRun?" - let's assume payload.enabled is the NEW STATE for dryRun? 
+        // Wait, usually toggles send the new desired state. 
+        // Using "enabled" as "isDryRun enabled"
+        CONFIG.dryRun = !!enable;
+
+        // Update State paper wallet
+        if (CONFIG.dryRun && !state.paper) {
+          state.paper = {
+            balance: CONFIG.capital.totalUsd,
+            initialBalance: CONFIG.capital.totalUsd,
+            pnl: 0,
+            trades: 0,
+            totalVolume: 0,
+          };
+        }
+
+        // Re-configure Services
+
+        // 1. Arbitrage Service (Needs restart to update signer/sim mode)
+        if (arbService) {
+          // Update internal flags if possible without full restart? 
+          // ArbitrageService takes readonly config in constructor. Better to re-create.
+          await arbService.stop();
+          // Re-run setup
+          await setupArbitrage(sdk);
+        }
+
+        // 2. DipArb (Update config)
+        sdk.dipArb.updateConfig({
+          autoExecute: !CONFIG.dryRun, // Live = autoExecute true (if config enabled)
+        });
+
+        // Emit new config to dashboard
+        const newDashboardConfig: BotConfig = {
+          capital: CONFIG.capital,
+          risk: CONFIG.risk,
+          smartMoney: { ...CONFIG.smartMoney },
+          arbitrage: { ...CONFIG.arbitrage },
+          dipArb: { ...CONFIG.dipArb },
+          directTrading: { ...CONFIG.directTrading },
+          binance: { ...CONFIG.binance },
+          dryRun: CONFIG.dryRun,
+        };
+        dashboardEmitter.updateConfig(newDashboardConfig);
+
+        log('WARN', `⚠️ BOT MODE CHANGED TO: ${CONFIG.dryRun ? '🧪 DRY RUN' : '🔴 LIVE'}`);
+      }
+    }
   });
 
   // Initialize Paper Wallet if Dry Run

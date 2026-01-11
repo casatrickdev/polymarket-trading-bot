@@ -39,6 +39,76 @@ function App() {
     sendCommand('redeemPosition', { conditionId });
   };
 
+  const handleToggleDryRun = () => {
+    if (!isDryRun) {
+      // Safety check when switching to DRY RUN? No, usually switching TO live needs check.
+      // Switching TO Live:
+      const confirm = window.confirm('⚠️ WARNING: You are switching to LIVE trading mode.\n\nReal funds will be used. Ensure you have loaded your Private Key and understand the risks.\n\nContinue?');
+      if (!confirm) return;
+    }
+    sendCommand('toggleDryRun', { enabled: !isDryRun }); // Payload expects target state? No, backend logic was `if (CONFIG.dryRun === !enable)` and `enable` was from `cmd.payload.enabled`. 
+    // Backend logic: `const enable = cmd.payload.enabled;` then `CONFIG.dryRun = !!enable;` 
+    // So if we want to enable LIVE (disable dryrun), we send enabled=false? 
+    // My backend logic says: `if (CONFIG.dryRun === !enable)` -> `CONFIG.dryRun = !enable` -> `CONFIG.dryRun = !!enable`.
+    // Wait. 
+    // If backend: `const enable = cmd.payload.enabled`. 
+    // If I send `enabled: true` (meaning "Enable Live"? or "Enable Dry Run"?). 
+    // Let's re-read backend.
+    // `const enable = cmd.payload.enabled;`
+    // `if (CONFIG.dryRun === !enable)` (Meaning dryRun matches 'enable'?? No, checking equality to inverse?)
+    // `CONFIG.dryRun = !enable`.
+    // If I send `enabled: true`. Then `!enable` is false. 
+    // If `CONFIG.dryRun` is `true`. `true === false` is false. No change.
+    // If `CONFIG.dryRun` is `false`. `false === false` is true. Enter block. `CONFIG.dryRun = false`.
+    // So `enabled: true` means "Set Dry Run = False" (Enable Live??).
+    // Let's look at `CONFIG.dryRun = !!enable` later in the block.
+    // Use clear key: `isLive`.
+    // Backend expects `enabled`. 
+    // Let's assume `enabled` means "Is Live Enabled".
+    // If I am Dry Run (dryRun=true). I want to go Live.
+    // I send `enabled: true`.
+    // Backend: `enable = true`. `!enable` = false.
+    // `CONFIG.dryRun` (true) === false? No.
+    // Block skipped.
+
+    // ERROR IN BACKEND LOGIC DETECTED.
+    // Backend: `if (CONFIG.dryRun === !enable)`
+    // If `dryRun` is true. `!enable` must be true. `enable` must be false.
+    // So `enable=false`.
+    // Then `CONFIG.dryRun = !enable` -> `true`. NO CHANGE.
+
+    // Let's fix Frontend to send what works, or fix backend.
+    // I can't fix backend easily now without re-doing it.
+    // Let's re-read backend carefully.
+
+    /* 
+    if (CONFIG.dryRun === !enable) { // If dryRun is TRUE, and enable is FALSE. (Match!)
+        // LOGIC:
+        CONFIG.dryRun = !!enable; // dryRun becomes FALSE (Live).
+    }
+    */
+
+    // So if current `dryRun` is true. I want to set it to false.
+    // I must send `enable` such that `!enable` == `dryRun`.
+    // `!enable` == true -> `enable` == false.
+    // If I send `false`.
+    // `CONFIG.dryRun` = `!!false` = false. CORRECT.
+
+    // So `enabled` in payload means "Enable Dry Run?".
+    // If I want to enable Dry Run (go to dry run). I send `true`.
+    // If I want to disable Dry Run (go to live). I send `false`.
+    // Backend variable name `enable` is confusing but `CONFIG.dryRun = !!enable` confirms it sets dryRun status.
+
+    // Frontend Logic:
+    // Toggle: New state is `!isDryRun`.
+    // Send `enabled: !isDryRun`.
+    // e.g. If isDryRun=true. New is false. Send false.
+    // Backend: `enable`=false. `dryRun`(true) === `!false`(true). Match.
+    // `CONFIG.dryRun` = false. Live. Correct.
+
+    sendCommand('toggleDryRun', { enabled: !isDryRun });
+  };
+
   // History page
   if (currentPage === 'history') {
     return <HistoryPage onBack={() => setCurrentPage('dashboard')} />;
@@ -77,6 +147,7 @@ function App() {
         connected={connected}
         onHistoryClick={() => setCurrentPage('history')}
         onPositionsClick={() => setCurrentPage('positions')}
+        onToggleDryRun={handleToggleDryRun}
       />
 
       <main className="p-4 space-y-4 max-w-[1800px] mx-auto">

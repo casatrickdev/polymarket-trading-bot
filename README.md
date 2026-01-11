@@ -141,7 +141,8 @@ If it doesn't open, just click that link.
 The dashboard is your command center.
 
 *   **Mode Indicator**: Shows if you are in **🔴 LIVE** or **🟢 DRY RUN** mode.
-*   **Balances**: Reat-time view of your MATIC and USDC.
+*   **Mode Toggle**: Click the "Switch to LIVE/DRY RUN" button in the header (next to History) to instantly switch between modes without restarting.
+*   **Balances**: Real-time view of your MATIC and USDC.
 *   **PnL Panel**: Tracks your Profit and Loss per session.
 *   **Quick Actions**: Buttons to instantly stop strategies or panic sell.
 
