@@ -5,7 +5,7 @@
 [![English](https://img.shields.io/badge/Language-English-blue)](README.md)
 [![Arabic](https://img.shields.io/badge/Language-Arabic-green)](README_AR.md)
 
-**Created by**: [@Mr_casatrick](https://t.me/casatrick)
+**Created by**: [@casatrick](https://t.me/casatrick)
 
 ## What's New in v3.2 (September 2026)
 
