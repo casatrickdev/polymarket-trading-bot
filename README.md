@@ -1,4 +1,4 @@
-# Polymarket Trading Bot v3.2 — Automated Trading, Execution & Backtesting
+# Polymarket Trading Bot v3.2 - Automated Trading, Execution & Backtesting
 
 **Polymarket trading bot for automated execution, arbitrage, dip trading, smart-money copy trading, risk management, monitoring, and backtesting.**
 
@@ -626,7 +626,7 @@ Additional documentation:
 
 # Version History
 
-### v3.2 — September 2026
+### v3.2 - September 2026
 
 * Fee-aware execution
 * Price-protected orders
@@ -642,26 +642,26 @@ Additional documentation:
 * Minimum-size protection
 * Loss-streak protection
 
-### v3.1 — January 2026
+### v3.1 - January 2026
 
 * Four-layer risk management
 * Smart-money filtering
 * Dynamic position sizing
 * Enhanced monitoring
 
-### v3.0 — December 2025
+### v3.0 - December 2025
 
 * Dashboard
 * Multi-strategy support
 * Auto-rotation
 
-### v2.0 — November 2025
+### v2.0 - November 2025
 
 * Smart Money
 * Arbitrage
 * DipArb strategies
 
-### v1.0 — October 2025
+### v1.0 - October 2025
 
 * Initial release
 
