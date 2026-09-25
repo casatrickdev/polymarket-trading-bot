@@ -1,387 +1,686 @@
-# Polymarket Trading Bot v3.2 - Execution & Backtesting
+# Polymarket Trading Bot v3.2 — Automated Trading, Execution & Backtesting
 
-**The Ultimate Open-Source Automated Trading Bot for Polymarket**
+**Polymarket trading bot for automated execution, arbitrage, dip trading, smart-money copy trading, risk management, monitoring, and backtesting.**
 
-[![English](https://img.shields.io/badge/Language-English-blue)](README.md)
-[![Arabic](https://img.shields.io/badge/Language-Arabic-green)](README_AR.md)
+Built for traders and developers who want to automate Polymarket trading while keeping **execution safety, position sizing, exposure limits, loss protection, and operational controls** close to the trading engine.
 
-**Created by**: [@casatrick](https://t.me/casatrick)
+Created by [@casatrick](https://t.me/casatrick)
 
-## What's New in v3.2 (September 2026)
-
-### **Execution Safety - All 13 Known Issues Resolved**
-- **Fee-aware profits**: Arbitrage and DipArb subtract taker fees + gas and enforce a minimum net-profit gate (no more fee-blind signals)
-- **Price-protected orders**: Every market order now sends worst-price caps/floors from the live order book - no more uncapped fills
-- **Sequential arb execution**: YES/NO legs execute one after the other with unwind-on-partial-fill and residual reconciliation (no more dual-order race)
-- **Tighter DipArb hedging**: Leg2 timeout 180s → 60s, new 20% stop-loss exit, 1:1 hedge enforced against actual on-chain fills
-- **Fresh copy-trade quotes**: Stale whale prints are skipped (>5s), entries re-quote the live book with spread/premium/liquidity guards
-- **Custom wallets gated**: Manually added wallets must pass the same WR/PnL/trades/profit-factor/consistency/whale filters as leaderboard picks
-- **Exposure caps enforced**: Total (30%) and per-market exposure tracked, blocks new trades, shown in status
-- **Configurable RPC**: `POLYGON_RPC_URL` env honored everywhere (no more hardcoded public endpoint)
-- **Wallet circuit breaker**: Copy-trading disables a wallet after 3 consecutive failures (1h cooldown)
-- **Backtesting harness**: JSONL order-book replay with fee/gas modeling (`npm run backtest`)
-- **MATIC monitoring**: Gas balance polled every 5 minutes against the configured minimum, pauses trading when low
-- **Sizing floor + streak pause**: Position sizing respects a USD minimum (skips instead of dust orders) and pauses after 6 straight losses
-
-### **Protection System: 4 Layers → 6 Layers**
-- **Layer 5**: Loss-streak pause (stops trading after 6 consecutive losses)
-- **Layer 6**: Exposure cap (blocks new positions above 30% of capital)
-
-## What's New in v3.1 (January 2026)
-
-### **Professional-Grade Risk Management**
-- **4-Layer Protection System**: Daily (5%), Monthly (15%), Drawdown (25%), Total Loss Halt (40%)
-- **Smart Money Filtering**: Only follow traders with 60%+ win rate, 1.5x profit factor, and consistency checks
-- **Dynamic Position Sizing**: Automatically reduces during losses, increases during wins
-- **Enhanced Monitoring**: Real-time risk status with breach alerts
-
-### **Safety Improvements**
-- **Minimum Trade Enforcement**: All DipArb positions ≥ $1.50 (guaranteed exit capability)
-- **Gas Fee Accounting**: Higher profit thresholds to cover transaction costs
-- **Whale Trade Detection**: Prevents following lucky one-hit wonders
-- **Permanent Halt**: Trading stops automatically at 40% total loss
-
-This guide will take you **from A to Z** on how to set up, configure, and run your own trading bot safely.
+[![English](https://img.shields.io/badge/Language-English-blue)](README.md) [![Arabic](https://img.shields.io/badge/Language-Arabic-green)](README_AR.md)
 
 ---
 
-## Table of Contents
+## What is this Polymarket trading bot?
 
-1. [Prerequisites](#prerequisites)
-2. [Installation](#installation)
-3. [Configuration](#configuration)
-4. [Running the Bot](#running-the-bot)
-5. [Dashboard Guide](#dashboard-guide)
-6. [Risk Management](#risk-management)
-7. [Strategies Explained](#strategies-explained)
-8. [Troubleshooting](#troubleshooting)
-9. [Safety & Risks](#safety--risks)
+This project is an open-source **automated Polymarket trading bot** designed to execute trading strategies while applying configurable risk and execution controls.
+
+The bot includes:
+
+* Automated Polymarket trading strategies
+* Order execution with live price protection
+* Fee- and gas-aware profit checks
+* Arbitrage and dip-arbitrage execution
+* Smart-money / trader copy filtering
+* Dynamic position sizing
+* Multi-layer risk management
+* Exposure limits
+* Loss-streak protection
+* Wallet circuit breakers
+* Real-time trading dashboard
+* Emergency stop controls
+* Polygon gas monitoring
+* JSONL order-book backtesting
+
+The goal is not only to generate trading signals, but to make the complete trading process more controlled:
+
+```text
+Market Data
+     ↓
+Strategy Signal
+     ↓
+Risk Checks
+     ↓
+Position Sizing
+     ↓
+Protected Order
+     ↓
+Execution
+     ↓
+Position / Exposure Tracking
+     ↓
+Monitoring & Recovery
+```
 
 ---
 
-## 1. Prerequisites
+## Why execution and risk management matter
 
-Before you start, you need three things:
+A trading strategy can produce a valid signal and still fail during execution.
 
-### Computer Requirements
-- **OS**: Windows, Mac, or Linux.
-- **Node.js**: You must have Node.js installed (Version 18 or higher).
-  - [Download Node.js here](https://nodejs.org/) (Choose "LTS" version).
-- **Git**: Required to download the code.
-  - [Download Git here](https://git-scm.com/).
+Real automated trading systems have to deal with:
 
-### Wallet Requirements
-- **A Polymarket Account**: Log in to [Polymarket.com](https://polymarket.com).
-- **USDC (Polygon)**: You need funds to trade.
-  - **USDC.e** is the specific token used on Polygon for Polymarket.
-- **MATIC (Polygon)**: You need a small amount ($1-$5) for gas fees.
+* changing order-book prices
+* transaction costs
+* partial fills
+* failed execution
+* stale wallet activity
+* excessive exposure
+* repeated losses
+* insufficient gas
+* reconnects and operational failures
 
-### Private Key
-- You need the **Private Key** of your wallet (e.g., from MetaMask or your Polymarket proxy wallet).
-- *Security Note: Never share this key with anyone.*
+v3.2 adds multiple controls around these failure modes so the bot can make trading decisions with execution and account state in mind.
 
 ---
 
-## 2. Installation
+# What's New in v3.2
 
-Open your terminal (Command Prompt or PowerShell on Windows, Terminal on Mac) and run these commands one by one.
+## Execution Safety
 
-### Step 1: Clone the Repository
-Download the bot code to your computer.
+v3.2 resolves 13 known execution and safety issues.
+
+### Fee-aware profit calculations
+
+Arbitrage and DipArb profit calculations account for:
+
+* taker fees
+* gas costs
+* minimum net-profit thresholds
+
+This prevents signals from being triggered solely by gross price differences.
+
+### Price-protected orders
+
+Market orders use worst-price caps or floors derived from the live order book.
+
+This adds an execution constraint instead of allowing an order to trade without a defined price boundary.
+
+### Sequential arbitrage execution
+
+YES and NO legs are executed sequentially rather than racing both orders simultaneously.
+
+If a partial fill occurs, the system can unwind and reconcile the remaining exposure.
+
+### Improved DipArb hedging
+
+DipArb includes:
+
+* shorter second-leg timeout
+* stop-loss protection
+* 1:1 hedge requirements based on actual fills
+
+### Fresh copy-trading quotes
+
+The bot skips stale whale trades and re-quotes entries using the current market book.
+
+Entries are additionally checked against spread, premium, and liquidity conditions.
+
+### Wallet filtering
+
+Custom wallets go through the same filtering process as leaderboard candidates, including:
+
+* win rate
+* PnL
+* trade history
+* profit factor
+* consistency
+* whale-trade checks
+
+### Exposure controls
+
+The bot tracks total and per-market exposure and blocks new trades when exposure limits are exceeded.
+
+### Configurable Polygon RPC
+
+Set `POLYGON_RPC_URL` to use a dedicated RPC endpoint instead of relying on a public endpoint.
+
+### Wallet circuit breaker
+
+Copy trading can disable a wallet after three consecutive failures, followed by a cooldown period.
+
+### Order-book backtesting
+
+v3.2 includes a JSONL order-book replay harness with fee and gas modeling:
+
+```bash
+npm run backtest
+```
+
+### Polygon gas monitoring
+
+The bot checks the configured Polygon gas balance periodically and can pause trading when the balance falls below the configured minimum.
+
+### Position sizing and loss-streak protection
+
+The bot skips orders below the configured USD minimum and pauses trading after six consecutive losses.
+
+---
+
+# Risk Management
+
+The bot uses a six-layer protection system.
+
+| Layer | Control                |  Default |
+| ----- | ---------------------- | -------: |
+| 1     | Daily loss limit       |       5% |
+| 2     | Monthly loss limit     |      15% |
+| 3     | Maximum drawdown       |      25% |
+| 4     | Total-loss halt        |      40% |
+| 5     | Consecutive-loss pause | 6 losses |
+| 6     | Total exposure cap     |      30% |
+
+### Daily loss limit
+
+Trading pauses after the configured daily loss threshold is reached.
+
+### Monthly loss limit
+
+Trading is paused when the configured monthly loss threshold is exceeded.
+
+### Drawdown limit
+
+The bot monitors drawdown from peak capital and pauses trading when the configured threshold is breached.
+
+### Total-loss halt
+
+Trading stops when the configured total-loss threshold is reached and requires manual restart.
+
+### Loss-streak pause
+
+After six consecutive losing trades, the bot pauses trading for a cooldown period.
+
+### Exposure cap
+
+New positions are blocked when total open exposure exceeds the configured capital percentage.
+
+Per-market exposure is also limited.
+
+---
+
+# Dynamic Position Sizing
+
+Position size changes according to recent trading performance.
+
+Default behavior:
+
+* Base position size: **2% of capital**
+* Consecutive losses reduce position size
+* Consecutive wins increase position size
+* Position growth is capped
+* Orders below the configured minimum size are skipped
+
+Example with `$250` configured capital:
+
+```text
+Base position:
+$250 × 2% = $5
+
+After consecutive losses:
+position size decreases
+
+After consecutive wins:
+position size increases, subject to the configured cap
+```
+
+Position sizing is intended to work together with the bot's loss limits and exposure controls rather than operating independently.
+
+---
+
+# Trading Strategies
+
+The bot currently supports four trading modes.
+
+## 1. Arbitrage
+
+The strategy searches for situations where the combined YES and NO prices satisfy an arbitrage condition.
+
+Conceptually:
+
+```text
+YES + NO < $1.00
+```
+
+The system then attempts to execute both sides while considering:
+
+* execution price
+* fees
+* gas
+* minimum net profit
+* available liquidity
+
+The theoretical price relationship does not guarantee realized profit because execution costs, liquidity, timing, and market conditions affect the result.
+
+---
+
+## 2. DipArb
+
+DipArb monitors short-duration crypto markets for large price movements.
+
+Current configuration includes:
+
+* BTC and ETH 15-minute markets
+* rapid price-move detection
+* first-leg entry
+* opposite-side hedge
+* stop-loss protection
+* minimum trade size
+* hedge validation using actual fills
+
+The strategy is designed around fast market movement and therefore remains sensitive to execution conditions and liquidity.
+
+---
+
+## 3. Smart Money
+
+The Smart Money strategy tracks selected Polymarket traders and applies filters before copying trades.
+
+Current filters include:
+
+* minimum 60% win rate
+* minimum total PnL
+* profit factor of at least 1.5x
+* consistency score requirement
+* protection against single-trade / whale-driven results
+* validation for custom wallets
+
+The strategy automatically copies qualifying trades subject to the bot's risk controls.
+
+---
+
+## 4. Direct Trading
+
+Direct Trading provides manual execution tools through the dashboard.
+
+Features include:
+
+* FOK orders
+* quick buy controls
+* execution-oriented order controls
+* stop-loss configuration
+* take-profit configuration
+* maximum holding period
+
+---
+
+# Backtesting
+
+The repository includes an order-book replay backtesting harness.
+
+Run:
+
+```bash
+npm run backtest
+```
+
+The backtesting environment can replay JSONL order-book data while modeling:
+
+* order execution
+* fees
+* gas costs
+* strategy behavior
+
+This makes it possible to evaluate execution logic against recorded market conditions before using live capital.
+
+---
+
+# Dashboard
+
+The web dashboard provides a central view of the trading system.
+
+## Monitoring
+
+The dashboard displays:
+
+* live / dry-run mode
+* USDC balance
+* Polygon gas balance
+* session PnL
+* strategy status
+* risk limits
+* drawdown
+* exposure
+* win/loss streaks
+* trading halt / pause state
+
+## Controls
+
+The dashboard provides:
+
+* strategy toggles
+* emergency stop
+* panic sell
+* live / dry-run mode controls
+
+The emergency stop blocks trading until the bot is restarted.
+
+---
+
+# Installation
+
+## Requirements
+
+* Windows, macOS, or Linux
+* Node.js 18+
+* Git
+* Polymarket account
+* Trading funds on Polygon
+* Polygon gas balance for transactions
+
+Download:
+
+* [Node.js](https://nodejs.org/)
+* [Git](https://git-scm.com/)
+
+---
+
+## Clone the repository
 
 ```bash
 git clone https://github.com/casatrickdev/polymarket-trading-bot
 cd Polymarket-trading-bot
 ```
 
-*(Note: If you downloaded the ZIP file instead, just unzip it and open the folder in your terminal)*
+---
 
-### Step 2: Install Dependencies & Build Dashboard
-This installs all the "parts" the bot needs to run and builds the dashboard interface.
+## Install dependencies
 
 ```bash
-# Install main dependencies
 npm install
+```
 
-# Build the dashboard (Critical Step!)
+Build the dashboard:
+
+```bash
 cd dashboard
 npm install
 npm run build
 cd ..
 ```
 
-*This process might take 1-3 minutes.*
-
 ---
 
-## 3. Configuration
+# Configuration
 
-This is the most important step. We need to tell the bot your wallet details.
+Create `.env` from `.env.example`:
 
-### Step 1: Create the .env File
-1. Find the file named `.env.example` in the folder.
-2. Copy it and rename the copy to `.env`.
+```bash
+cp .env.example .env
+```
 
-### Step 2: Add Your Credentials
-Open the `.env` file with any text editor (Notepad, VS Code) and fill in your details:
+Then configure the required environment variables.
+
+Example:
 
 ```env
 # ==============================================
-# WALLET CONFIGURATION (REQUIRED)
+# WALLET CONFIGURATION
 # ==============================================
 
-# Your Wallet Private Key (Export from MetaMask)
-# Format: 0x...
 POLYMARKET_PRIVATE_KEY=0xYourPrivateKeyHere
 
 # ==============================================
 # BOT SETTINGS
 # ==============================================
 
-# CAPITAL (Your risk budget - NOT your wallet balance)
-# This determines position sizes and risk limits
-# Start with a small amount for testing
 CAPITAL_USD=250
 
-# DRY RUN MODE
-# "true" = Simulation Mode (No real money used, SAFE to test)
-# "false" = Live Trading (Real money used, BE CAREFUL)
+# true = simulation mode
+# false = live trading
 DRY_RUN=true
 
-# RISK MANAGEMENT (Optional - defaults are conservative)
-DAILY_MAX_LOSS_PCT=0.05      # 5% daily loss limit
-MONTHLY_MAX_LOSS_PCT=0.15    # 15% monthly loss limit
-MAX_DRAWDOWN_PCT=0.25        # 25% drawdown from peak
-TOTAL_MAX_LOSS_PCT=0.40      # 40% total loss = permanent halt
+# ==============================================
+# RISK MANAGEMENT
+# ==============================================
 
-# API Keys (Optional but recommended for speed)
-# Get a free key from specific providers if you want better performance
-# ALCHEMY_KEY=...
+DAILY_MAX_LOSS_PCT=0.05
+MONTHLY_MAX_LOSS_PCT=0.15
+MAX_DRAWDOWN_PCT=0.25
+TOTAL_MAX_LOSS_PCT=0.40
 
-# Polygon RPC (Optional - avoids the rate-limited public endpoint)
-# Get a free key from Alchemy/Infura/QuickNode and paste the HTTPS URL
-# POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY
+# ==============================================
+# OPTIONAL RPC
+# ==============================================
 
-# Dashboard security (Optional)
-# The dashboard binds to localhost (127.0.0.1) by default. To reach it from
-# another machine, set DASHBOARD_HOST=0.0.0.0 AND set a long random token -
-# the token is required on the API/WebSocket and the bot prints the full
-# dashboard URL (including ?token=...) at startup.
+# POLYGON_RPC_URL=https://your-rpc-provider.example/...
+
+# ==============================================
+# OPTIONAL DASHBOARD SECURITY
+# ==============================================
+
 # DASHBOARD_HOST=127.0.0.1
 # DASHBOARD_TOKEN=generate-a-long-random-string
 ```
 
-**IMPORTANT:** 
-- Start with `DRY_RUN=true` and `CAPITAL_USD=50` for testing
-- Only change to `DRY_RUN=false` when you are 100% sure everything works
+### Private-key security
+
+Never commit your private key to GitHub.
+
+Do not place secrets directly into source files.
+
+Use environment variables or an appropriate secrets-management solution for production deployments.
 
 ---
 
-## 4. Running the Bot
+# Running the Bot
 
-Now the fun part! Let's start the bot with the visual dashboard.
-
-Run this command:
+Start the trading bot with its dashboard:
 
 ```bash
 npx tsx bot-with-dashboard.ts
 ```
 
-### What happens next?
-1. The terminal will show startup logs.
-2. It will verify your wallet connection.
-3. **The Dashboard URL is printed in the terminal** at `http://localhost:3001` (if you set `DASHBOARD_TOKEN`, the printed URL includes `?token=...` - open that exact link).
+The terminal will display:
 
-If it doesn't open by itself, copy the URL from the terminal.
+1. Startup logs
+2. Wallet connection status
+3. Dashboard address
+4. Strategy status
+5. Risk status
 
----
+The dashboard runs locally by default.
 
-## 5. Dashboard Guide
+Typical URL:
 
-The dashboard is your command center with **enhanced risk monitoring**.
+```text
+http://localhost:3001
+```
 
-### Main Panels
-- **Mode Indicator**: Shows if you are in ** LIVE** or ** DRY RUN** mode.
-- **Mode Toggle**: Click the "Switch to LIVE/DRY RUN" button to instantly switch modes.
-- **Balances**: Real-time view of your MATIC and USDC.
-- **PnL Panel**: Tracks your Profit and Loss per session.
-
-### Risk Status
-The bot enforces its risk limits internally (daily / monthly / drawdown / total-loss / loss-streak / exposure cap) and the **Risk Status panel** visualizes them live: loss-limit usage meters, drawdown from peak, open exposure vs cap, win/loss streaks, and a HALTED/PAUSED state badge.
-
-### Quick Actions
-- **Strategy Toggles**: Enable/disable strategies in real-time
-- **Emergency Stop** (bottom of the Strategy Controls panel): instantly halts all strategies - trading stays blocked until you restart the bot
-- **Panic Sell** (bottom of the Strategy Controls panel): closes up to 10 open positions at market price, with double confirmation
+When `DASHBOARD_TOKEN` is configured, use the authenticated URL printed by the application.
 
 ---
 
-## 6. Risk Management
+# Dry Run Mode
 
-### Multi-Layer Protection System
+For initial testing:
 
-The bot now has **6 layers of protection** to safeguard your capital:
+```env
+DRY_RUN=true
+```
 
-#### Layer 1: Daily Loss Limit (5%)
-- **What it does**: Stops trading if you lose 5% in one day
-- **Action**: Pauses for 60 minutes, then resumes
-- **Example**: With $250 capital, stops at -$12.50 daily loss
+Dry-run mode allows you to inspect system behavior without intentionally placing live trades.
 
-#### Layer 2: Monthly Loss Limit (15%)
-- **What it does**: Stops trading if you lose 15% in 30 days
-- **Action**: Pauses for 30 days (rest of month)
-- **Example**: With $250 capital, stops at -$37.50 monthly loss
+Do not enable live trading until you have verified:
 
-#### Layer 3: Drawdown Limit (25%)
-- **What it does**: Monitors drop from your peak capital
-- **Action**: Pauses for 7 days if exceeded
-- **Example**: Peak $300, stops if drops below $225
-
-#### Layer 4: Total Loss Halt (40%)
-- **What it does**: **PERMANENT HALT** if total loss reaches 40%
-- **Action**: Stops trading entirely, requires manual restart
-- **Example**: With $250 capital, halts at -$100 total loss
-
-#### Layer 5: Loss-Streak Pause (v3.2)
-- **What it does**: Stops trading after 6 consecutive losing trades
-- **Action**: Pauses for 60 minutes, then resumes
-- **Why**: Prevents revenge-trading spirals and oversized decay from dynamic sizing
-
-#### Layer 6: Exposure Cap (v3.2)
-- **What it does**: Blocks new positions when total open exposure exceeds 30% of capital (10% per market)
-- **Action**: New signals are skipped until exposure drops
-- **Example**: With $250 capital, no new trades above $75 total exposure
-
-### Smart Position Sizing
-
-The bot now **adapts position sizes** based on performance:
-
-- **Base Size**: 2% of capital (down from 3%)
-- **During Losses**: Reduces by 20% per consecutive loss
-- **During Wins**: Increases by 10% per consecutive win (capped at 5%)
-- **Example**:
-  - Normal: $250 × 2% = $5/trade
-  - After 3 losses: $5 × 0.8 × 0.8 = $3.20/trade
-  - After 5 wins: $5 × 1.4 = $7/trade (capped at $12.50)
+* wallet configuration
+* strategy configuration
+* risk limits
+* dashboard controls
+* RPC connectivity
+* execution behavior
+* emergency-stop behavior
 
 ---
 
-## 7. Strategies Explained
+# Troubleshooting
 
-The bot comes with 4 powerful strategies. You can toggle them ON/OFF in the dashboard.
+## Command not found
 
-### 1. Arbitrage
-- **Concept**: Finds markets where `YES Price + NO Price < $1.00`.
-- **Action**: Buys both sides immediately.
-- **Profit**: Guaranteed math-based profit when the market resolves to $1.00.
-- **v3.1**: Higher profit threshold (1%) to cover gas fees
-- **Risk**: Extremely Low.
+Verify that Node.js is installed:
 
-### 2. DipArb (Dip Arbitrage)
-- **Concept**: Watches for panic selling in 15-minute crypto markets (BTC, ETH).
-- **Trigger**: If price crashes >15% in 3 seconds.
-- **Action**: Buys the dip (Leg 1) and hedges with the opposite side (Leg 2).
-- *v3.1**: Minimum $1.50 trade value (all positions can be exited)
-- **Risk**: Low-Medium (hedged positions).
+```bash
+node --version
+```
 
-### 3. Smart Money (Enhanced)
-- **Concept**: Tracks the top profitable traders on the leaderboard.
-- **Strict Filtering**:
-  - Minimum 60% win rate (up from 50%)
-  - Minimum $500 total PnL (up from $100)
-  - Profit Factor ≥ 1.5x (wins/losses ratio)
-  - Consistency score 70%+ (recent performance)
-  - No whale trades (max 30% PnL from one trade)
-- **Action**: Copies their trades automatically.
-- **Risk**: Medium (depends on trader quality).
-
-### 4. Direct Trading
-- **Concept**: Tools for manual trading with super-powers.
-- **Features**:
-  - **FOK (Fill or Kill)**: Ensures your whole order fills or cancels.
-  - **Sniper**: Quick buy buttons slightly above market price.
-- **v3.1**: Stop-loss (15%), Take-profit (25%), Max hold (7 days)
-- **Risk**: Controlled (with new limits).
+Node.js 18 or newer is required.
 
 ---
 
-## 8. Troubleshooting
+## Connection failed
 
-**"Command not found" error?**
-- Make sure you installed Node.js. Restart your computer if you just installed it.
+Check:
 
-**"Connection Failed"?**
-- Check your internet.
-- Verify your `POLYMARKET_PRIVATE_KEY` is correct in `.env`.
-
-**"Insufficient Funds"?**
-- You need both USDC (for trades) and MATIC (for gas) on the **Polygon Network**.
-
-**"Trade value below minimum"?**
-- This is the new $1.50 minimum protection. Increase your `CAPITAL_USD` or wait for better prices.
-
-**Bot paused unexpectedly?**
-- Check the Risk Status panel - you may have hit a daily/monthly/drawdown limit.
-- This is a **safety feature** working as intended.
+* internet connectivity
+* Polymarket configuration
+* private-key configuration
+* Polygon RPC configuration
+* wallet access
 
 ---
 
-## 9. Safety & Risks
+## Insufficient funds
 
-### Built-in Safety Features (v3.2)
-1. **Multi-Layer Limits**: 6 levels of automatic protection (daily, monthly, drawdown, total halt, loss streak, exposure cap)
-2. **Quality Trader Filtering**: Only follow proven, consistent traders (including custom wallets)
-3. **Position Size Limits**: Maximum 5% per trade, USD minimum floor, adapts to performance
-4. **Price-Protected Orders**: All market orders carry worst-price caps/floors from live books
-5. **Sequential Hedged Execution**: No partial/unhedged fills left behind on failures
-6. **Permanent Halt**: Trading stops at 40% total loss
-
-### Your Responsibilities
-1. **Private Keys**: Your key gives full access to your funds. Keep it safe.
-2. **Start Small**: 
-   - Use Dry Run first (24-48 hours)
-   - Then test with $50 real money
-   - Scale up gradually to $250+
-3. **Monitor Regularly**: Check the Risk Status panel daily
-4. **Understand Limits**: Know what triggers each safety layer
-5. **Capital Management**: Set `CAPITAL_USD` to what you can afford to lose
-
-### Recommended Testing Path
-
-1. **Day 1-2**: Dry run mode (`DRY_RUN=true`, `CAPITAL_USD=50`)
-2. **Day 3-9**: Live testing (`DRY_RUN=false`, `CAPITAL_USD=50`)
-3. **Day 10+**: Scale up if profitable (`CAPITAL_USD=250`)
-
-### Emergency Actions
-
-If something goes wrong:
-1. Click "Emergency Stop" in dashboard
-2. Or press `Ctrl+C` in terminal
-3. Use "Panic Sell" only if absolutely necessary
+Verify that the wallet has the required trading balance and sufficient Polygon gas balance.
 
 ---
 
-## Additional Resources
+## Trade below minimum
 
-- **Original SDK Documentation**: For developers who want to use the raw SDK, see [SDK_DOCUMENTATION.md](SDK_DOCUMENTATION.md).
-- **Beginner Guide**: Step-by-step tutorial in [BEGINNER_GUIDE.md](BEGINNER_GUIDE.md).
-- **Quick Start**: Fast setup guide in [QUICKSTART.md](QUICKSTART.md).
-- **Community Tutorials**: Video walkthrough and full written guide - see [🎥 Community Tutorials](#-community-tutorials) at the top of this page.
+The bot can reject positions below the configured minimum trade size.
 
----
-
-## Version History
-
-- **v3.2** (September 2026): Execution safety (fee-aware profits, price protection, sequential hedging), 6-layer protection, backtesting harness
-- **v3.1** (January 2026): Enhanced Risk Management, Smart Money improvements, Dynamic sizing
-- **v3.0** (December 2025): Dashboard, Multi-strategy support, Auto-rotation
-- **v2.0** (November 2025): Smart Money, Arbitrage, DipArb strategies
-- **v1.0** (October 2025): Initial release
+Increase the configured capital or wait for a trade that satisfies the minimum-size conditions.
 
 ---
 
-**Created by**: [@casatrick](https://x.com/casatrick)
+## Bot paused
 
-**Support**: Open an issue on GitHub or contact via Twitter
+Open the dashboard and inspect the Risk Status panel.
 
-⚠️ **Disclaimer**: Trading involves risk. This bot does not guarantee profits. Always trade responsibly and never invest more than you can afford to lose.
+The bot can pause trading after:
+
+* daily loss threshold
+* monthly loss threshold
+* drawdown threshold
+* loss streak
+* exposure limit
+* insufficient gas
+* other configured safety conditions
+
+---
+
+# Safety & Risk Disclosure
+
+Automated trading involves financial risk.
+
+This project does **not** guarantee profits.
+
+Market conditions, liquidity, fees, gas costs, execution timing, technical failures, and strategy behavior can all affect results.
+
+Before using live capital:
+
+1. Test in dry-run mode.
+2. Verify all risk limits.
+3. Confirm emergency controls work.
+4. Start with capital you can afford to lose.
+5. Monitor the system regularly.
+6. Keep private keys secure.
+
+Never share your private key.
+
+---
+
+# Technical Focus
+
+This repository is also intended as an engineering reference for building automated Polymarket trading systems.
+
+Core engineering areas include:
+
+```text
+Polymarket Trading
+├── Strategy execution
+├── Order management
+├── Order-book based pricing
+├── Position sizing
+├── Risk management
+├── Exposure tracking
+├── Execution safety
+├── Backtesting
+├── Monitoring
+├── Recovery controls
+└── Operational tooling
+```
+
+The project focuses on the part of automated trading that happens between a strategy signal and the final account state.
+
+---
+
+# Documentation
+
+Additional documentation:
+
+* [SDK Documentation](SDK_DOCUMENTATION.md)
+* [Beginner Guide](BEGINNER_GUIDE.md)
+* [Quick Start](QUICKSTART.md)
+* [Arabic README](README_AR.md)
+
+---
+
+# Version History
+
+### v3.2 — September 2026
+
+* Fee-aware execution
+* Price-protected orders
+* Sequential arbitrage execution
+* Improved DipArb hedging
+* Fresh copy-trading quotes
+* Wallet filtering
+* Exposure caps
+* Configurable Polygon RPC
+* Wallet circuit breaker
+* JSONL order-book backtesting
+* Polygon gas monitoring
+* Minimum-size protection
+* Loss-streak protection
+
+### v3.1 — January 2026
+
+* Four-layer risk management
+* Smart-money filtering
+* Dynamic position sizing
+* Enhanced monitoring
+
+### v3.0 — December 2025
+
+* Dashboard
+* Multi-strategy support
+* Auto-rotation
+
+### v2.0 — November 2025
+
+* Smart Money
+* Arbitrage
+* DipArb strategies
+
+### v1.0 — October 2025
+
+* Initial release
+
+---
+
+# About Casatrick
+
+Built by [@casatrick](https://x.com/casatrick).
+
+Casatrick focuses on **Polymarket trading systems, automated execution, trading infrastructure, and production-oriented tooling**.
+
+For questions, open a GitHub issue or contact [@casatrick](https://x.com/casatrick).
+
+---
+
+## Keywords
+
+Polymarket trading bot · Polymarket bot · automated Polymarket trading · Polymarket trading automation · Polymarket arbitrage bot · Polymarket trading system · Polymarket execution · Polymarket risk management · Polymarket backtesting · prediction market trading bot · automated trading bot · crypto trading bot
+
+---
+
+⚠️ **Disclaimer:** Trading involves risk. This software does not guarantee profits. Use it at your own risk and never trade more than you can afford to lose.
